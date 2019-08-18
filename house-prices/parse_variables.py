@@ -6,8 +6,16 @@ Utilities to extract the definitions of the qualitative variables from 'document
 # Standard library:
 import json
 import re
+import typing as T
 
-P_QUANTITATIVE = re.compile(r'''
+# 3rd party:
+from yaml import dump
+try:
+    from yaml import CDumper as Dumper
+except ImportError:  # fall back to pure Python
+    from yaml import Dumper
+
+P_QUALITATIVE = re.compile(r'''
     (?P<name>[^(]+)            # the name, including leading and trailing white spaces
     \(                         # '('
     (?P<kind>Nominal|Ordinal)  # the kind is either 'Nominal' or 'Ordinal'
@@ -20,11 +28,18 @@ P_VALUE = re.compile(r'''
     \t                         # a tabulation
 ''', re.VERBOSE)
 
+P_QUANTITATIVE = re.compile(r'''
+    (?P<name>[^(]+)                # the name, including leading and trailing white spaces
+    \(                             # '('
+    (?P<kind>Discrete|Continuous)  # the kind is either 'Discrete' or 'Continuous'
+    \):                            # '):'
+''', re.VERBOSE)
 
-def parse_definitions(path):
+
+def parse_definitions(path: str) -> T.List[T.Dict[str, T.Any]]:
     """\
     Parses definitions from a file.
-    
+
     Args:
         path: The path to the file to parse.
     """
@@ -36,7 +51,7 @@ def parse_definitions(path):
             # Skip empty lines:
             if len(line.strip()) == 0:
                 continue
-            
+
             if in_definition:
                 m = P_VALUE.match(line)
                 if m:
@@ -52,20 +67,46 @@ def parse_definitions(path):
                     definitions.append(definition)
                     in_definition = False
                     values = []
-            
+
             if not in_definition:
-                m = P_QUANTITATIVE.match(line)
+                m = P_QUALITATIVE.match(line)
                 if m:
                     # This is the start of a new definition:
                     name = m.group('name').strip()
                     kind = m.group('kind').strip()
                     in_definition = True
-            
+                m = P_QUANTITATIVE.match(line)
+                if m:
+                    # This is a definition
+                    name = m.group('name').strip()
+                    kind = m.group('kind').strip()
+                    definition = {
+                        'name': name,
+                        'kind': kind
+                    }
+                    definitions.append(definition)
+
     return definitions
+
+
+def dump_json(definitions, filename):
+    """\
+    Save in JSON format.
+    """
+    with open(filename, 'w') as f:
+        # Use indented representation instead of compact one:
+        json.dump(definitions, f, indent=4)
+
+
+def dump_yaml(definitions, filename):
+    """\
+    Save in YAML format.
+    """
+    with open(filename, 'w') as f:
+        dump(definitions, stream=f, Dumper=Dumper, default_flow_style=False)
 
 
 if __name__ == '__main__':
     definitions = parse_definitions('documentation.txt')
-    # Save as JSON:
-    with open('qualitative_variables.json', 'w') as f:
-        json.dump(definitions, f)
+    dump_json(definitions, 'variables.json')
+#     dump_yaml(definitions, 'variables.yaml')
