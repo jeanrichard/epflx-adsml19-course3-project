@@ -493,6 +493,10 @@
         "kind": "Continuous"
     },
     {
+        "name": "2nd Flr SF",
+        "kind": "Continuous"
+    },
+    {
         "name": "Low Qual Fin SF",
         "kind": "Continuous"
     },
@@ -585,6 +589,16 @@
     {
         "name": "Garage Yr Blt",
         "kind": "Discrete"
+    },
+    {
+        "name": "Garage Finish",
+        "kind": "Ordinal",
+        "values": [
+            "Fin",
+            "RFn",
+            "Unf",
+            "NA"
+        ]
     },
     {
         "name": "Garage Cars",

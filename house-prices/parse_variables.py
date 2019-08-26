@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """\
-Utilities to extract the definitions of the qualitative variables from 'documentation.txt'.
+Utilities to extract the definitions of the variables from 'documentation.txt'.
 """
 
 # Standard library:
@@ -19,7 +19,7 @@ P_QUALITATIVE = re.compile(r'''
     (?P<name>[^(]+)            # the name, including leading and trailing white spaces
     \(                         # '('
     (?P<kind>Nominal|Ordinal)  # the kind is either 'Nominal' or 'Ordinal'
-    \):                        # '):'
+    \)\s*:                     # '):'
 ''', re.VERBOSE)
 
 P_VALUE = re.compile(r'''
@@ -32,7 +32,7 @@ P_QUANTITATIVE = re.compile(r'''
     (?P<name>[^(]+)                # the name, including leading and trailing white spaces
     \(                             # '('
     (?P<kind>Discrete|Continuous)  # the kind is either 'Discrete' or 'Continuous'
-    \):                            # '):'
+    \)\s*:                         # '):'
 ''', re.VERBOSE)
 
 
@@ -52,13 +52,14 @@ def parse_definitions(path: str) -> T.List[T.Dict[str, T.Any]]:
             if len(line.strip()) == 0:
                 continue
 
+            # The same line can end a definition and start a new one:
             if in_definition:
                 m = P_VALUE.match(line)
                 if m:
-                    # This is a value:
+                    # This is a valid value:
                     values.append(m.group('value').strip())
                 else:
-                    # This is the end of the current definition:
+                    # This ends the definition of a qualitative variable:
                     definition = {
                         'name': name,
                         'kind': kind,
@@ -71,13 +72,14 @@ def parse_definitions(path: str) -> T.List[T.Dict[str, T.Any]]:
             if not in_definition:
                 m = P_QUALITATIVE.match(line)
                 if m:
-                    # This is the start of a new definition:
+                    # This starts the definition of a qualitative variable:
                     name = m.group('name').strip()
                     kind = m.group('kind').strip()
                     in_definition = True
+                    
                 m = P_QUANTITATIVE.match(line)
                 if m:
-                    # This is a definition
+                    # This is the definition of a quantitative variable:
                     name = m.group('name').strip()
                     kind = m.group('kind').strip()
                     definition = {
