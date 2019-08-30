@@ -8,24 +8,17 @@ import json
 import re
 import typing as T
 
-# 3rd party:
-from yaml import dump
-try:
-    from yaml import CDumper as Dumper
-except ImportError:  # fall back to pure Python
-    from yaml import Dumper
-
 P_QUALITATIVE = re.compile(r'''
-    (?P<name>[^(]+)            # the name, including leading and trailing white spaces
-    \(                         # '('
-    (?P<kind>Nominal|Ordinal)  # the kind is either 'Nominal' or 'Ordinal'
-    \)\s*:                     # '):'
+    (?P<name>[^(]+)                # the name, including leading and trailing white spaces
+    \(                             # '('
+    (?P<kind>Nominal|Ordinal)      # the kind is either 'Nominal' or 'Ordinal'
+    \)\s*:                         # '):'
 ''', re.VERBOSE)
 
 P_VALUE = re.compile(r'''
-    [ ]{7}                     # 7 blank spaces
-    (?P<value>[^\t]+)          # the value, including leading and trailing white spaces
-    \t                         # a tabulation
+    [ ]{7}                         # 7 blank spaces
+    (?P<value>[^\t]+)              # the value, including leading and trailing white spaces
+    \t                             # a tabulation
 ''', re.VERBOSE)
 
 P_QUANTITATIVE = re.compile(r'''
@@ -100,15 +93,6 @@ def dump_json(definitions, filename):
         json.dump(definitions, f, indent=4)
 
 
-def dump_yaml(definitions, filename):
-    """\
-    Save in YAML format.
-    """
-    with open(filename, 'w') as f:
-        dump(definitions, stream=f, Dumper=Dumper, default_flow_style=False)
-
-
 if __name__ == '__main__':
     definitions = parse_definitions('documentation.txt')
     dump_json(definitions, 'variables.json')
-#     dump_yaml(definitions, 'variables.yaml')
