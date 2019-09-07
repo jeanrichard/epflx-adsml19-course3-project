@@ -97,12 +97,13 @@ def replace_invalid(series: pd.Series,
     return series
 
 
-def mode(series: pd.Series, default: T.Any=None):
+def mode(series: pd.Series, default: T.Any=None, exclusion_list: T.Sequence[T.Any] = None):
     """\
     Ignores null/na values in a series and computes the mode. If the mode is not defined (i.e. 
     the series contains only null/na values), returns ``default``.
     """
-    mode = series.mode(dropna=True)
+    subseries = series.loc[~series.isin(exclusion_list)] if exclusion_list else series
+    mode = subseries.mode(dropna=True)
     return default if mode.empty else mode.iloc[0]
 
 
@@ -144,15 +145,15 @@ def fillna_with_median_by(df: pd.DataFrame, name: str, by: str) -> pd.DataFrame:
     return df
 
 
-def get_mode_by(df: pd.DataFrame, name: str, by: str) -> pd.Series:
+def get_mode_by(df: pd.DataFrame, name: str, by: str, exclusion_list: T.Sequence[T.Any] = None) -> pd.Series:
     """\
     Returns a series, indexed by unique values of ``df[by]``. Groups the ``df[name]`` values into
     subsets using the ``df[by]`` values. If the mode is defined on a given subset, uses it to
     populate the series. Otherwise, uses the mode overall.
     """
-    mode_overall = mode(df[name], None)
+    mode_overall = mode(df[name], None, exclusion_list)
     assert mode_overall is not None
-    mode_by = df.groupby(by=by)[name].agg(lambda series: mode(series, mode_overall))
+    mode_by = df.groupby(by=by)[name].agg(lambda series: mode(series, mode_overall, exclusion_list))
     return mode_by
 
 
@@ -169,21 +170,22 @@ def get_median_by(df: pd.DataFrame, name: str, by: str) -> pd.Series:
 
 
 def categorize(df: pd.DataFrame,
-               rules: T.Tuple[str, str, str, T.Callable[[T.Any], bool]]) -> T.Tuple[pd.DataFrame, pd.DataFrame]:
+               rules: T.Tuple[str, T.Callable[[T.Any], str]]) -> T.Tuple[pd.DataFrame, pd.DataFrame]:
     """\
     Categorizes values according to rules. Each rule is of the form ``(column-name, 
     label-if-predicate, label-if-not-predicate, predicate)``.
     """
     data = {}
     columns = []
-    for name, label, notlabel, predicate in rules:
+    for name, labeler in rules:
         columns.append(name)
-        series = (df[name]
-                  .mask(df[name].isna(), 'null')
-                  .mask(df[name].notna() & predicate(df[name]), label)
-                  .mask(df[name].notna() & ~predicate(df[name]), notlabel)
-                 )
-        data[name] = series
+        series = df[name]
+        labeled_notna = series[series.notna()].map(labeler)
+        labeled_series = (series
+                          .mask(df[name].isna(), 'null')
+                          .mask(df[name].notna(), labeled_notna)
+                         )
+        data[name] = labeled_series
     
     # Add a column to count:
     columns_plus = columns + ['Count']
