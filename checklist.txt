@@ -13,10 +13,10 @@ Warm-up - task 2
 
 House prices analysis
 
-- [ ] Perform data cleaning, outliers removal
-- [ ] Perform feature encoding
-- [ ] Perform feature engineering
-- [ ] Create baseline, simple, intermediate, complex models
-- [ ] Apply regularization, tune model with grid search
-- [ ] Compare test MAE scores ex. bar chart
+- [x] Perform data cleaning, outliers removal
+- [x] Perform feature encoding
+- [x] Perform feature engineering
+- [x] Create baseline, simple, intermediate, complex models
+- [x] Apply regularization, tune model with grid search
+- [x] Compare test MAE scores ex. bar chart
 - [ ] Save predictions in .csv files
