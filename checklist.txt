@@ -19,4 +19,4 @@ House prices analysis
 - [x] Create baseline, simple, intermediate, complex models
 - [x] Apply regularization, tune model with grid search
 - [x] Compare test MAE scores ex. bar chart
-- [ ] Save predictions in .csv files
+- [x] Save predictions in .csv files
